@@ -36,6 +36,9 @@
 @property (nonatomic, strong) UIColor *textColor;
 @property (nonatomic, strong) UIColor *textShadowColor;
 @property (nonatomic, assign) CGSize textShadowOffset;
+// added by adaiye
+@property (nonatomic, assign) BOOL selectedOnTapped;
+@property (nonatomic, readonly) NSArray *selectedTags;
 
 - (void)setTagBackgroundColor:(UIColor *)color;
 - (void)setTagHighlightColor:(UIColor *)color;

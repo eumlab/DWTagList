@@ -81,6 +81,24 @@
     }
 }
 
+-(NSArray *)selectedTags{
+    NSMutableArray *arr = [NSMutableArray array];
+    if (self.selectedOnTapped) {
+        for (UIView *subview in [self subviews]) {
+            if ([subview isKindOfClass:[DWTagView class]]) {
+                DWTagView *tagView = (DWTagView*)subview;
+                if (tagView.button.selected) {
+                    NSString *tag = tagView.label.text;
+                    if (![arr containsObject:tag]) {
+                        [arr addObject:tag];
+                    }
+                }
+            }
+        }
+    }
+    return arr;
+}
+
 - (void)setTagBackgroundColor:(UIColor *)color
 {
     lblBackgroundColor = color;
@@ -205,7 +223,12 @@
 {
     UIButton *button = (UIButton*)sender;
     DWTagView *tagView = (DWTagView *)[button superview];
-    [tagView setBackgroundColor:[self getBackgroundColor]];
+    if (self.selectedOnTapped) {
+        button.selected = !button.selected;
+        [tagView setBackgroundColor:(button.selected ? self.highlightedBackgroundColor : self.backgroundColor)];
+    }else{
+        [tagView setBackgroundColor:[self getBackgroundColor]];
+    }
     
     if ([self.tagDelegate respondsToSelector:@selector(selectedTag:tagIndex:)]) {
         [self.tagDelegate selectedTag:tagView.label.text tagIndex:tagView.tag];
