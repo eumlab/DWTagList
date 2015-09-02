@@ -24,7 +24,8 @@
 #define DEFAULT_AUTOMATIC_RESIZE NO
 #define DEFAULT_SHOW_TAG_MENU NO
 
-@interface DWTagList () <DWTagViewDelegate>
+@interface DWTagList () <DWTagViewDelegate>{
+}
 
 @end
 
@@ -85,7 +86,7 @@
     NSMutableArray *arr = [NSMutableArray array];
     if (self.selectedOnTapped) {
         for (UIView *subview in [self subviews]) {
-            if ([subview isKindOfClass:[DWTagView class]]) {
+            if ([subview isKindOfClass:[DWTagView class]] && ![subview isEqual:self.lastDottedView]) {
                 DWTagView *tagView = (DWTagView*)subview;
                 if (tagView.button.selected) {
                     NSString *tag = tagView.label.text;
@@ -119,6 +120,34 @@
     }
 }
 
+- (void)addTag:(NSString *)tag{
+    NSMutableArray *arr = [self.textArray mutableCopy];
+    [arr addObject:tag];
+    textArray = arr;
+    if (self.lastDottedView) {
+        [self.lastDottedView.button removeTarget:nil action:nil forControlEvents:UIControlEventAllEvents];
+        [self.lastDottedView removeFromSuperview];
+    }
+    
+    CGRect previousFrame = CGRectZero;
+    if (textArray.count > 1) {
+        UIView *subview = self.subviews[textArray.count - 2];
+        previousFrame = subview.frame;
+    }
+    for (NSInteger i = textArray.count - 1; i <= textArray.count; i++) {
+        DWTagView *tagView = [self addTagView:i andFrame:previousFrame andList:[NSMutableArray array]];
+        if (tagView) {
+            if (self.selectedOnTapped && ![tagView isEqual:self.lastDottedView]) {
+                [self setTagViewSelected:tagView andSelected:YES];
+            }
+            previousFrame = tagView.frame;
+        }
+    }
+    sizeFit = CGSizeMake(self.frame.size.width, previousFrame.origin.y + previousFrame.size.height + self.bottomMargin + 1.0f);
+    self.contentSize = sizeFit;
+//    [self scrollToBottomAnimated:YES];
+}
+
 - (void)layoutSubviews
 {
     [super layoutSubviews];
@@ -144,62 +173,92 @@
     BOOL gotPreviousFrame = NO;
     
     NSInteger tag = 0;
-    for (id text in textArray) {
-        DWTagView *tagView;
-        if (tagViews.count > 0) {
-            tagView = [tagViews lastObject];
-            [tagViews removeLastObject];
-        }
-        else {
-            tagView = [[DWTagView alloc] init];
-        }
-        
-        
-        [tagView updateWithString:text
-                             font:self.font
-               constrainedToWidth:self.frame.size.width - (self.horizontalPadding * 2)
-                          padding:CGSizeMake(self.horizontalPadding, self.verticalPadding)
-                     minimumWidth:self.minimumWidth
-         ];
-        
-        if (gotPreviousFrame) {
-            CGRect newRect = CGRectZero;
-            if (previousFrame.origin.x + previousFrame.size.width + tagView.frame.size.width + self.labelMargin > self.frame.size.width) {
-                newRect.origin = CGPointMake(0, previousFrame.origin.y + tagView.frame.size.height + self.bottomMargin);
-            } else {
-                newRect.origin = CGPointMake(previousFrame.origin.x + previousFrame.size.width + self.labelMargin, previousFrame.origin.y);
-            }
-            newRect.size = tagView.frame.size;
-            [tagView setFrame:newRect];
-        }
-        
-        previousFrame = tagView.frame;
-        gotPreviousFrame = YES;
-        
-        [tagView setBackgroundColor:[self getBackgroundColor]];
-        [tagView setCornerRadius:self.cornerRadius];
-        [tagView setBorderColor:self.borderColor.CGColor];
-        [tagView setBorderWidth:self.borderWidth];
-        [tagView setTextColor:self.textColor];
-        [tagView setTextShadowColor:self.textShadowColor];
-        [tagView setTextShadowOffset:self.textShadowOffset];
-        [tagView setTag:tag];
-        [tagView setDelegate:self];
-        
-        tag++;
-        
-        [self addSubview:tagView];
-        
-        if (!_viewOnly) {
-            [tagView.button addTarget:self action:@selector(touchDownInside:) forControlEvents:UIControlEventTouchDown];
-            [tagView.button addTarget:self action:@selector(touchUpInside:) forControlEvents:UIControlEventTouchUpInside];
-            [tagView.button addTarget:self action:@selector(touchDragExit:) forControlEvents:UIControlEventTouchDragExit];
-            [tagView.button addTarget:self action:@selector(touchDragInside:) forControlEvents:UIControlEventTouchDragInside];
+    for (NSInteger i = 0; i <= textArray.count; i++) {
+        DWTagView *tagView = [self addTagView:i andFrame:previousFrame andList:tagViews];
+        if (tagView) {
+            previousFrame = tagView.frame;
         }
     }
     
     sizeFit = CGSizeMake(self.frame.size.width, previousFrame.origin.y + previousFrame.size.height + self.bottomMargin + 1.0f);
     self.contentSize = sizeFit;
+}
+
+-(DWTagView *)addTagView:(NSInteger)i andFrame:(CGRect)previousFrame andList:(NSMutableArray *)tagViews{
+    BOOL isLast = i == textArray.count;
+    if (isLast && !self.showDottedAtLast) {
+        return nil;
+    }
+    id text = isLast ? self.lastDottedText : self.textArray[i];
+    DWTagView *tagView;
+    if (tagViews.count > 0) {
+        tagView = [tagViews lastObject];
+        [tagViews removeLastObject];
+    }
+    else {
+        tagView = [[DWTagView alloc] init];
+    }
+    
+    
+    [tagView updateWithString:text
+                         font:self.font
+           constrainedToWidth:self.frame.size.width - (self.horizontalPadding * 2)
+                      padding:CGSizeMake(self.horizontalPadding, self.verticalPadding)
+                 minimumWidth:self.minimumWidth
+     ];
+    
+    if (previousFrame.size.width > 0) {
+        CGRect newRect = CGRectZero;
+        if (previousFrame.origin.x + previousFrame.size.width + tagView.frame.size.width + self.labelMargin > self.frame.size.width) {
+            newRect.origin = CGPointMake(0, previousFrame.origin.y + tagView.frame.size.height + self.bottomMargin);
+        } else {
+            newRect.origin = CGPointMake(previousFrame.origin.x + previousFrame.size.width + self.labelMargin, previousFrame.origin.y);
+        }
+        newRect.size = tagView.frame.size;
+        [tagView setFrame:newRect];
+    }
+    
+    previousFrame = tagView.frame;
+    
+    [tagView setBackgroundColor:[self getBackgroundColor]];
+    [tagView setCornerRadius:self.cornerRadius];
+    [tagView setBorderColor:self.borderColor.CGColor];
+    [tagView setBorderWidth:self.borderWidth];
+    [tagView setTextColor:self.textColor];
+    [tagView setTextShadowColor:self.textShadowColor];
+    [tagView setTextShadowOffset:self.textShadowOffset];
+    [tagView setTag:i];
+    [tagView setDelegate:self];
+    
+    [self addSubview:tagView];
+    
+    if (!_viewOnly) {
+        [tagView.button addTarget:self action:@selector(touchDownInside:) forControlEvents:UIControlEventTouchDown];
+        [tagView.button addTarget:self action:@selector(touchUpInside:) forControlEvents:UIControlEventTouchUpInside];
+        [tagView.button addTarget:self action:@selector(touchDragExit:) forControlEvents:UIControlEventTouchDragExit];
+        [tagView.button addTarget:self action:@selector(touchDragInside:) forControlEvents:UIControlEventTouchDragInside];
+    }
+    
+    if (isLast) {
+        CAShapeLayer *border = [self getDotBorderLayer];
+        border.path = [UIBezierPath bezierPathWithRoundedRect:tagView.bounds cornerRadius:self.cornerRadius].CGPath;
+        border.frame = tagView.bounds;
+        tagView.layer.borderColor = [UIColor clearColor].CGColor;
+        [tagView.layer addSublayer:border];
+        self.lastDottedView = tagView;
+    }
+    return tagView;
+}
+
+-(CAShapeLayer*)getDotBorderLayer{
+    CAShapeLayer *border = [CAShapeLayer layer];
+    border.cornerRadius = self.cornerRadius;
+    border.strokeColor = [self.borderColor colorWithAlphaComponent:0.3].CGColor;
+    border.fillColor = nil;
+    border.lineCap = kCALineCapRound;
+    border.lineWidth = 1;
+    border.lineDashPattern = @[@2, @3];
+    return border;
 }
 
 - (CGSize)fittedSize
@@ -217,22 +276,32 @@
 {
     UIButton *button = (UIButton*)sender;
     DWTagView *tagView = (DWTagView *)[button superview];
+    if ([tagView isEqual:self.lastDottedView]) {
+        return;
+    }
     [tagView setBackgroundColor:self.highlightedBackgroundColor];
     if (self.selectedOnTapped) {
         [tagView setTextColor:self.highlightedTextColor];
     }
 }
 
+-(void)setTagViewSelected:(DWTagView *)tagView  andSelected:(BOOL)selected{
+    tagView.button.selected = selected;
+    [tagView setBackgroundColor:(selected ? self.highlightedBackgroundColor : [self getBackgroundColor])];
+    [tagView setTextColor:(selected ? self.highlightedTextColor : self.textColor)];
+    
+}
+
 - (void)touchUpInside:(id)sender
 {
     UIButton *button = (UIButton*)sender;
     DWTagView *tagView = (DWTagView *)[button superview];
-    if (self.selectedOnTapped) {
-        button.selected = !button.selected;
-        [tagView setBackgroundColor:(button.selected ? self.highlightedBackgroundColor : [self getBackgroundColor])];
-        [tagView setTextColor:(button.selected ? self.highlightedTextColor : self.textColor)];
-    }else{
-        [tagView setBackgroundColor:[self getBackgroundColor]];
+    if (![tagView isEqual:self.lastDottedView]) {
+        if (self.selectedOnTapped) {
+            [self setTagViewSelected:tagView andSelected:!button.selected];
+        }else{
+            [tagView setBackgroundColor:[self getBackgroundColor]];
+        }
     }
     
     if ([self.tagDelegate respondsToSelector:@selector(selectedTag:tagIndex:)]) {

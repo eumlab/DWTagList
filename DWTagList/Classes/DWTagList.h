@@ -9,6 +9,8 @@
 
 @protocol DWTagListDelegate, DWTagViewDelegate;
 
+@class DWTagView;
+
 @interface DWTagList : UIScrollView
 {
     UIView      *view;
@@ -39,11 +41,15 @@
 // added by adaiye
 @property (nonatomic, strong) UIColor *highlightedTextColor;
 @property (nonatomic, assign) BOOL selectedOnTapped;
+@property (nonatomic, assign) BOOL showDottedAtLast;
+@property (nonatomic, strong) NSString *lastDottedText;
+@property (nonatomic, strong) DWTagView *lastDottedView;
 @property (nonatomic, readonly) NSArray *selectedTags;
 
 - (void)setTagBackgroundColor:(UIColor *)color;
 - (void)setTagHighlightColor:(UIColor *)color;
 - (void)setTags:(NSArray *)array;
+- (void)addTag:(NSString *)tag;
 - (void)display;
 - (CGSize)fittedSize;
 - (void)scrollToBottomAnimated:(BOOL)animated;
