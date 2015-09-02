@@ -216,7 +216,11 @@
 - (void)touchDownInside:(id)sender
 {
     UIButton *button = (UIButton*)sender;
-    [[button superview] setBackgroundColor:self.highlightedBackgroundColor];
+    DWTagView *tagView = (DWTagView *)[button superview];
+    [tagView setBackgroundColor:self.highlightedBackgroundColor];
+    if (self.selectedOnTapped) {
+        [tagView setTextColor:self.highlightedTextColor];
+    }
 }
 
 - (void)touchUpInside:(id)sender
@@ -225,7 +229,8 @@
     DWTagView *tagView = (DWTagView *)[button superview];
     if (self.selectedOnTapped) {
         button.selected = !button.selected;
-        [tagView setBackgroundColor:(button.selected ? self.highlightedBackgroundColor : self.backgroundColor)];
+        [tagView setBackgroundColor:(button.selected ? self.highlightedBackgroundColor : [self getBackgroundColor])];
+        [tagView setTextColor:(button.selected ? self.highlightedTextColor : self.textColor)];
     }else{
         [tagView setBackgroundColor:[self getBackgroundColor]];
     }
