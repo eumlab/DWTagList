@@ -145,7 +145,7 @@
     }
     sizeFit = CGSizeMake(self.frame.size.width, previousFrame.origin.y + previousFrame.size.height + self.bottomMargin + 1.0f);
     self.contentSize = sizeFit;
-//    [self scrollToBottomAnimated:YES];
+    //    [self scrollToBottomAnimated:YES];
 }
 
 - (void)layoutSubviews
@@ -288,6 +288,7 @@
 -(void)setTagViewSelected:(DWTagView *)tagView  andSelected:(BOOL)selected{
     tagView.button.selected = selected;
     [tagView setBackgroundColor:(selected ? self.highlightedBackgroundColor : [self getBackgroundColor])];
+    [tagView setBorderColor:(selected ? self.highlightedBorderColor : self.borderColor).CGColor];
     [tagView setTextColor:(selected ? self.highlightedTextColor : self.textColor)];
     
 }

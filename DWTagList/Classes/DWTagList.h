@@ -39,6 +39,7 @@
 @property (nonatomic, strong) UIColor *textShadowColor;
 @property (nonatomic, assign) CGSize textShadowOffset;
 // added by adaiye
+@property (nonatomic, strong) UIColor *highlightedBorderColor;
 @property (nonatomic, strong) UIColor *highlightedTextColor;
 @property (nonatomic, assign) BOOL selectedOnTapped;
 @property (nonatomic, assign) BOOL showDottedAtLast;
