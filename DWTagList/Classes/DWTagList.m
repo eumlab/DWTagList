@@ -256,8 +256,8 @@
     border.strokeColor = [self.borderColor colorWithAlphaComponent:0.3].CGColor;
     border.fillColor = nil;
     border.lineCap = kCALineCapRound;
-    border.lineWidth = 1;
-    border.lineDashPattern = @[@2, @3];
+    border.lineWidth = 2;
+    border.lineDashPattern = @[@5, @3];
     return border;
 }
 
